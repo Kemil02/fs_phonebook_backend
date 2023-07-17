@@ -10,6 +10,7 @@ morgan.token('content', (r) => JSON.stringify(r.body))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :content'))
 
 app.use(express.json())
+app.use(express.static('build'))
 app.use(cors())
 
 let persons = [
@@ -87,7 +88,7 @@ app.post('/api/persons', (request, response) => {
 })
 
 function getRandomID() {
-    return Math.floor(Math.random() * (10000 - 1) + 1); // The maximum is exclusive and the minimum is inclusive
+    return Math.floor(Math.random() * (10000 - 1) + 1)
 }
 
 
