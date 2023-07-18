@@ -2,7 +2,9 @@ const { request } = require('express')
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
+require('dotenv').config()
 const cors = require('cors')
+const Person = require('./models/person')
 
 
 
@@ -37,7 +39,9 @@ let persons = [
 ]
 
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find({}).then(p => {
+        response.json(p)
+    })
 })
 
 app.get('/info', (request, response) => {
@@ -86,6 +90,23 @@ app.post('/api/persons', (request, response) => {
     response.json(person)
     console.log("Done")
 })
+
+app.put('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    const updatedPerson = request.body
+
+    persons = persons.map(person => {
+        if (person.id === id) {
+            return { ...person, ...updatedPerson }
+        }
+        return person
+    })
+
+    response.json(updatedPerson)
+})
+
+
+
 
 function getRandomID() {
     return Math.floor(Math.random() * (10000 - 1) + 1)
