@@ -61,7 +61,7 @@ app.get('/api/persons/:id', (request, response, next) => {
 app.delete('/api/persons/:id', (request, response, next) => {
     const inputID = request.params.id
 
-    Person.findByIdAndRemove(inputID).then(result => {
+    Person.findByIdAndRemove(inputID).then(() => {
 
         response.status(204).end()
 
@@ -71,7 +71,7 @@ app.delete('/api/persons/:id', (request, response, next) => {
 
 //POST
 app.post('/api/persons', (request, response, next) => {
-    console.log("Post recieved")
+    console.log('Post recieved')
     
 
     if (!request.body.name || !request.body.number) {
