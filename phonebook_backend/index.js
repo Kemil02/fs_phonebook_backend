@@ -11,64 +11,66 @@ const Person = require('./models/person')
 morgan.token('content', (r) => JSON.stringify(r.body))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :content'))
 
+
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+    else if (error.name === 'ValidationError') {
+        return response.status(400).json({ error: error.message })
+    }
+
+    next(error)
+}
+
+app.use(cors())
 app.use(express.json())
 app.use(express.static('build'))
-app.use(cors())
 
-let persons = [
-    {
-        "id": 1,
-        "name": "Arto Hellas",
-        "number": "040-123456"
-    },
-    {
-        "id": 2,
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523"
-    },
-    {
-        "id": 3,
-        "name": "Dan Abramov",
-        "number": "12-43-234345"
-    },
-    {
-        "id": 4,
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122"
-    }
-]
-
-app.get('/api/persons', (request, response) => {
+//GET
+app.get('/api/persons', (request, response, next) => {
     Person.find({}).then(p => {
         response.json(p)
-    })
+    }).catch(error => next(error))
 })
+
 
 app.get('/info', (request, response) => {
-    response.send(`<p>Phonebook has info for ${persons.length} people</p><p>${new Date}</p>`)
+    response.send(`<p>Phonebook has info for ${Person.length} people</p><p>${new Date}</p>`)
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    const inputID = Number(request.params.id)
-    Person.find({id: inputID}).then(p => {
+
+app.get('/api/persons/:id', (request, response, next) => {
+    const inputID = request.params.id
+    Person.findById(inputID).then(p => {
         if (p) {
+            console.log(p)
             response.json(p)
         } else {
             response.status(404).end()
         }
-    })
+    }).catch(error => next(error))
     
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    console.log("Trying to delete...")
-    const id = Number(request.params.id)
-    persons = persons.filter(p => p.id !== id)
-    console.log("Deleted.")
-    response.status(204).end()
+
+//DELETE
+app.delete('/api/persons/:id', (request, response, next) => {
+    const inputID = request.params.id
+
+    Person.findByIdAndRemove(inputID).then(result => {
+
+        response.status(204).end()
+
+    }).catch(error => next(error))
 }) 
 
-app.post('/api/persons', (request, response) => {
+
+//POST
+app.post('/api/persons', (request, response, next) => {
     console.log("Post recieved")
     
 
@@ -77,11 +79,11 @@ app.post('/api/persons', (request, response) => {
             error: 'content missing'
         })
     }
-    else if (persons.find(p => p.name === request.body.name)) {
+    /*else if (persons.find(p => p.name === request.body.name)) {
         return response.status(400).json({
             error: 'name must be unique'
         })
-    }
+    }*/
     const newPerson = new Person({
         id: getRandomID(),
         name: request.body.name,
@@ -90,22 +92,25 @@ app.post('/api/persons', (request, response) => {
 
     newPerson.save().then(newP => {
         response.json(newP)
+    }).catch(error => {
+        console.log('Error alert!')
+        next(error)
     })
-    console.log("Done")
+    
 })
 
-app.put('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
+
+//PUT
+app.put('/api/persons/:id', (request, response, next) => {
+    const inputID = request.params.id
     const updatedPerson = request.body
 
-    persons = persons.map(person => {
-        if (person.id === id) {
-            return { ...person, ...updatedPerson }
-        }
-        return person
-    })
+    Person.findByIdAndUpdate(inputID, updatedPerson, { new: true, runValidators: true, context: 'query' }).then(p => {
 
-    response.json(updatedPerson)
+        response.json(p)
+
+    }).catch(error => next(error))
+
 })
 
 
@@ -115,8 +120,8 @@ function getRandomID() {
     return Math.floor(Math.random() * (10000 - 1) + 1)
 }
 
-
-const PORT = process.env.PORT || 3001
+app.use(errorHandler)
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })

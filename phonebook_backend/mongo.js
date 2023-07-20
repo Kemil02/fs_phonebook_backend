@@ -5,14 +5,13 @@ if (!(process.argv.length === 3 || process.argv.length === 5)) {
     process.exit(1)
 }
 
+
 const password = process.argv[2]
 
 const url = `mongodb+srv://karlemillemstrom:${password}@cluster0.d6dzmik.mongodb.net/?retryWrites=true&w=majority`
 
 mongoose.set('strictQuery', false)
 mongoose.connect(url)
-
-
 const contactSchema = new mongoose.Schema({
     id: Number,
     name: String,

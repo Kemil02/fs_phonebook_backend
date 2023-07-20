@@ -1,3 +1,4 @@
 # misc
 /phonebook_backend/account_details.txt
-.env
+/phonebook_backend/.env
+
